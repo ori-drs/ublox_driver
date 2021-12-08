@@ -10,20 +10,28 @@ Install Google's glog library for message output:
 sudo apt-get install libgoogle-glog-dev
 ```
 
-Clone [gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm) for ROS message definitions into your catkin workspace:
+Clone [gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm) for ROS message definitions:
 
 ```shell
-cd catkin_ws/src
+cd spot_git
 git clone git@github.com:HKUST-Aerial-Robotics/gnss_comm.git
 ```
 
-Clone this repository into your catkin workspace:
+Clone this repository:
 
 ```shell
-git clone git@github.com/ori-drs/ublox_driver.git
+git clone git@github.com:ori-drs/ublox_driver.git
 ```
 
 Depending on you desired configuration, you might need to change [the configuration file](/config/driver_config.yaml), but it should work out-of-the-box.
+
+Create symbolic links from you catkin workspace to the cloned repositiores:
+
+```shell
+cd ../spot_ws/src
+ln -s .
+.
+```
 
 Build the driver using catkin tools:
 
@@ -33,6 +41,12 @@ catkin build ublox_driver
 ```
 
 Launch ```roscore``` in another terminal.
+
+Grant permission to the port, e.g:
+
+```shell
+sudo chmod 666 /dev/ttyACM0
+```
 
 Launch the driver:
 
