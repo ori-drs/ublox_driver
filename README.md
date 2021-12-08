@@ -25,12 +25,12 @@ git clone git@github.com:ori-drs/ublox_driver.git
 
 Depending on you desired configuration, you might need to change [the configuration file](/config/driver_config.yaml), but it should work out-of-the-box.
 
-Create symbolic links from you catkin workspace to the cloned repositiores:
+Create symbolic links from you catkin workspace to the cloned repositories
 
 ```shell
 cd ../spot_ws/src
-ln -s .
-.
+ln -s ~/spot_git/gnss_comm/ .
+ln -s ~/spot_git/ublox_driver/ .
 ```
 
 Build the driver using catkin tools:
