@@ -1,3 +1,46 @@
+# ROS driver for the u-blox ZED-F9P GNSS receiver
+
+*Brief setup instructions by Jonas Beuchert, original readme [below](#ublox_driver).*
+
+You need a C++11 compiler, ROS, Eigen 3.3.3, and Boost, but they might be installed already.
+
+Install Google's glog library for message output:
+
+```shell
+sudo apt-get install libgoogle-glog-dev
+```
+
+Clone [gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm) for ROS message definitions into your catkin workspace:
+
+```shell
+cd catkin_ws/src
+git clone git@github.com:HKUST-Aerial-Robotics/gnss_comm.git
+```
+
+Clone this repository into your catkin workspace:
+
+```shell
+git clone git@github.com/ori-drs/ublox_driver.git
+```
+
+Depending on you desired configuration, you might need to change [the configuration file](/config/driver_config.yaml), but it should work out-of-the-box.
+
+Build the driver using catkin tools:
+
+```shell
+cd ..
+catkin build ublox_driver
+```
+
+Launch ```roscore``` in another terminal.
+
+Launch the driver:
+
+```shell
+source devel/setup.bash
+roslaunch ublox_driver ublox_driver.launch
+```
+
 # ublox_driver
 
 **Authors/Maintainers:** CAO Shaozu (shaozu.cao AT gmail.com)
