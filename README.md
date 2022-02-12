@@ -55,7 +55,7 @@ source devel/setup.bash
 roslaunch ublox_driver ublox_driver.launch
 ```
 
-It might be worth it to check out [Section 5.](5.-Synchronize-System-Time) below to synchronize the local system time with a global time reference (and, therefore, with the timestamps of the GNSS observations.)
+It might be worth it to check out [Section 5.](#5.-synchronize-system-time) below to synchronize the local system time with a global time reference (and, therefore, with the timestamps of the GNSS observations.)
 
 # ublox_driver
 
