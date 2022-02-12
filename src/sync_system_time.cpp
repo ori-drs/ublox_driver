@@ -27,7 +27,7 @@
 #include <gnss_comm/gnss_utility.hpp>
 #include <gnss_comm/gnss_ros.hpp>
 
-constexpr int UTC_OFFSET = 8;
+constexpr int UTC_OFFSET = 0;  // TODO (Jonas): Get from system
 
 using namespace gnss_comm;
 
