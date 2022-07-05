@@ -48,6 +48,8 @@ Grant permission to the port, e.g:
 sudo chmod 666 /dev/ttyACM0
 ```
 
+(Altneratively, add the user permanently to the `dialout` group with `sudo adduser user_name dialout` and logout and login again.)
+
 Launch the driver:
 
 ```shell
@@ -57,19 +59,62 @@ roslaunch ublox_driver ublox_driver.launch
 
 It might be worth it to check out [Section 5.](#5-synchronize-system-time) below to synchronize the local system time with a global time reference (and, therefore, with the timestamps of the GNSS observations.)
 
-If you want to obtain differentail fixes in real-time, you need to feed data from a nearby base station to the receiver. If the receiver has Bluetooth (like the C099), then you can do the following:
+### Differential GNSS
 
-* Install an NTRIP client (for examaple [the Lefebure NTRIP Client](https://play.google.com/store/apps/details?id=com.lefebure.ntripclient&hl=en_GB&gl=US)) on your phone.
-* In the receiver settings, select the Bluetooth option and connect to the receiver.
-* In the NTRIP caster section, select a base station. For example, the one near Bicester has the IP address 3.23.52.207, the port 2101, the mount point / stream name OXTS1, and no username and no password. It uses the NTRIP Rev 1 protocol.
+If you want to obtain differential fixes in real-time (with potentially cm-accuracy), then you need to feed data from a nearby base station to the GNSS receiver.
+
+If the **receiver has Bluetooth** (like the C099-F9P), then you can do the following:
+
+* Install an NTRIP client (for example, [the Lefebure NTRIP Client](https://play.google.com/store/apps/details?id=com.lefebure.ntripclient&hl=en_GB&gl=US)) on your phone.
+* In the receiver settings, select the Bluetooth option and connect to the GNSS receiver.
+* In the NTRIP caster section, select a base station. For example, the one near Bicester has the IP address 3.23.52.207, the port 2101, the mount point / stream name OXTS1, and no username and no password. It uses the NTRIP Rev 1 protocol. You can find other base stations [in this table](http://rtk2go.com:2101). For example, you could search for stations with country code GBR, which provide at least GPS, Glonass (GLO), Galileo (GAL), and BeiDou (BDS) data.
 * Run the client and stream the data from the base to the receiver.
 * Check that the flag `diff_soln` in the fixes in the `receiver_pvt` topic is `True` after your started to stream the data.
 
-If the receiver does not have Bluetooth, then follow the instructions in the section "Obtain RTK Solution (Optional)" below. The command to connect to the base station near Bicester after you have installed RTKLIB is:
+If the **receiver does not have Bluetooth**, but the **NUC has internet**, then follow the instructions in the section *Obtain RTK Solution (Optional)* below. 
+
+Summary of steps here.
+
+Install RTKLIB's NTRIP client:
+```shell
+git clone https://github.com/tomojitakasu/RTKLIB.git
+cd RTKLIB/
+git checkout rtklib_2.4.3
+cd app/consapp/str2str/gcc/
+make
 ```
-cd frontier_ws/src/RTKLIB/app/consapp/str2str/gcc
+
+Connect to the NTRIP stream of the base station:
+
+```shell
+./str2str -in ntrip://${NTRIP_SITE}:${NTRIP_PORT}/${MOUNT_POINT} -out tcpsvr://:3503
+```
+
+For example, for the stream from the base close to Bicester:
+
+```shell
 ./str2str -in ntrip://3.23.52.207:2101/OXTS1 -out tcpsvr://:3503
 ```
+
+Set the `input_rtcm` option to `1` in [config/driver_config.yaml](config/driver_config.yaml).
+
+Launch the ROS node as usual:
+
+```
+roslaunch ublox_driver ublox_driver.launch
+```
+
+Again, check that the flag `diff_soln` in the fixes in the `receiver_pvt` topic is `True`.
+
+To obtain differential fixes **offline** with post-processing, you can do the following:
+
+* Log the stream from a base station during your trial with an NTRIP client of your choice.
+* Convert the log into the RINEX format, if necessary.
+* Convert the GNSS observations in your rosbag into RINEX format using [this tool](https://github.com/HKUST-Aerial-Robotics/GVINS-Dataset/blob/b2d7b8c546342b7b25b51d7138ba61932d22131b/toolkit/src/bag2rinex.cpp).
+* Install [RTKLIB](http://rtklib.com/) or [this well-maintained fork](https://github.com/rtklibexplorer/RTKLIB/releases).
+* Get the satellite navigation data from [here](https://igs.bkg.bund.de/root_ftp/IGS/BRDC/). Choose the correct year and day-of-the year and the file named `BRDM00DLR_S_YYYYDDD0000_01D_MN.rnx.gz`. (Alternatively, get the satellite navigation data from the base station, too.)
+* Optionally, get SP3, CLK, ERP, and ION files from [here](https://igs.bkg.bund.de/root_ftp/IGS/products/orbits/). Choose the correct [GPS week number](https://www.ngs.noaa.gov/CORS/Gpscal.shtml) and the correct day of the week (Sunday=0, Monday=1, ...) to identify the correct directory and file. Files starting with `igs` are better than files starting `igr`, which are better than the `igu` files. Using these files should improve performance since they are more accurate than the broadcasted data mentioned above.
+* Use RTKLIB's RTKPOST program with all these files to obatain a differential solution. If you are uncertain which options to choose, then have a look at the section in [the RTKLIB manual](http://www.rtklib.com/prog/manual_2.4.2.pdf) that describes RTKPOST. Probably the `Kinematic` mode is a good starting point.
 
 # ublox_driver
 
