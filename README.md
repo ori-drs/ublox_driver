@@ -57,6 +57,20 @@ roslaunch ublox_driver ublox_driver.launch
 
 It might be worth it to check out [Section 5.](#5-synchronize-system-time) below to synchronize the local system time with a global time reference (and, therefore, with the timestamps of the GNSS observations.)
 
+If you want to obtain differentail fixes in real-time, you need to feed data from a nearby base station to the receiver. If the receiver has Bluetooth (like the C099), then you can do the following:
+
+* Install an NTRIP client (for examaple [the Lefebure NTRIP Client](https://play.google.com/store/apps/details?id=com.lefebure.ntripclient&hl=en_GB&gl=US)) on your phone.
+* In the receiver settings, select the Bluetooth option and connect to the receiver.
+* In the NTRIP caster section, select a base station. For example, the one near Bicester has the IP address 3.23.52.207, the port 2101, the mount point / stream name OXTS1, and no username and no password. It uses the NTRIP Rev 1 protocol.
+* Run the client and stream the data from the base to the receiver.
+* Check that the flag `diff_soln` in the fixes in the `receiver_pvt` topic is `True` after your started to stream the data.
+
+If the receiver does not have Bluetooth, then follow the instructions in the section "Obtain RTK Solution (Optional)" below. The command to connect to the base station near Bicester after you have installed RTKLIB is:
+```
+cd frontier_ws/src/RTKLIB/app/consapp/str2str/gcc
+./str2str -in ntrip://3.23.52.207:2101/OXTS1 -out tcpsvr://:3503
+```
+
 # ublox_driver
 
 **Authors/Maintainers:** CAO Shaozu (shaozu.cao AT gmail.com)
