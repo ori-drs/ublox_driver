@@ -23,7 +23,7 @@ Clone this repository:
 git clone git@github.com:ori-drs/ublox_driver.git
 ```
 
-Depending on you desired configuration, you might need to change [the configuration file](/config/driver_config.yaml), but it should work out-of-the-box.
+Depending on you desired configuration, you might need to change [the configuration file](/config/driver_config.yaml), but it should work out-of-the-box. Sometimes, you need to change the port. Usually, it is `dev/ttyACM0` (default) or `/dev/ttyACM1`.
 
 Create symbolic links from you catkin workspace to the cloned repositories
 
@@ -48,7 +48,7 @@ Grant permission to the port, e.g:
 sudo chmod 666 /dev/ttyACM0
 ```
 
-(Altneratively, add the user permanently to the `dialout` group with `sudo adduser user_name dialout` and logout and login again.)
+(Alternatively, add the user permanently to the `dialout` group with `sudo adduser user_name dialout` and logout and login again.)
 
 Launch the driver:
 
@@ -58,6 +58,12 @@ roslaunch ublox_driver ublox_driver.launch
 ```
 
 It might be worth it to check out [Section 5.](#5-synchronize-system-time) below to synchronize the local system time with a global time reference (and, therefore, with the timestamps of the GNSS observations.)
+
+### Troubleshooting
+
+If the driver prints the error `ubx rxmrawx week=0 error` or the error `open: No such file or directory`, a cause can be that the port in [the configuration file](/config/driver_config.yaml) is incorrectly set.
+
+If a *permission-denied* error occurs, then the driver might not have access rights to the port.
 
 ### Differential GNSS
 
