@@ -96,6 +96,7 @@ If you use ubxtool, then you can use some or all of the following commands:
 * `ubxtool -f /dev/ttyACM0 -d RAWX` to disable `UBX-RXM-RAWX`.
 * `ubxtool -f /dev/ttyACM0 -e NMEA` to enable NMEA messages.
 * `ubxtool -f /dev/ttyACM0 -d NMEA` to disable NMEA messages.
+* 
 Afterwards, run `ubxtool -f /dev/ttyACM0 -p SAVE`.
 
 ## Differential GNSS
