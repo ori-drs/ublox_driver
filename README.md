@@ -59,13 +59,46 @@ roslaunch ublox_driver ublox_driver.launch
 
 It might be worth it to check out [Section 5.](#5-synchronize-system-time) below to synchronize the local system time with a global time reference (and, therefore, with the timestamps of the GNSS observations.)
 
-### Troubleshooting
+## Troubleshooting
 
 If the driver prints the error `ubx rxmrawx week=0 error` or the error `open: No such file or directory`, a cause can be that the port in [the configuration file](/config/driver_config.yaml) is incorrectly set.
 
 If a *permission-denied* error occurs, then the driver might not have access rights to the port.
 
-### Differential GNSS
+If no messages appear despite there being view of the sky, you might have to manually enable the binary messages of the receiver, see [below](#enabeling_and_disabling_messages).
+
+## Receiver configuration
+
+You can use different software to change the configuration of the receiver firmware (e.g., the measurement frequency or which messages are broadcasted):
+* [u-center](https://www.u-blox.com/en/product/u-center) provides a graphical user interface for Windows. As of writing, _v22.07_ is the most recent version that supports the ZED-F9P chip.
+* [ubxtool](https://gpsd.gitlab.io/gpsd/ubxtool.html) is a Linux/MacOS command line tool that is part of [GPSd](https://gpsd.gitlab.io/gpsd/). To get the full functionality for the ZED-F9P, you need a recent version. I built _GPSd v25.0_ from source following [these](https://gpsd.gitlab.io/gpsd/building.html) instructions and it worked.
+
+## Enabeling and disabling messages
+
+The receiver can broadcast two types of messages: human-readable NMEA messages and binary UBX messages.
+This driver needs the binary messages.
+If only NMEA meesages are enabled, you need to manually enable the binary messages (and, optionally, turn NMEA messages off).
+Specifically, you need to enable one or more of the following messages (depending on your use case):
+* `UBX-RXM-RAWX` for raw GNSS measurements from individual satellites.
+* `UBX-RXM-SFRBX` for satellite navigation data broadcasted by the satellites.
+* `UBX-NAV-PVT` for pre-computed GNSS fixes.
+You can find a description of all messages [in the u-blox F9 interface description
+](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf)
+To enable one or more of these, install _u-center_ or _GPSd/ubxtool_, as described [above](#receiver-configuration).
+If you use u-center, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them.
+Next, head to the _Configuration View_, select _CFG_, then _Save current configuration_, then _Send_ to save these settings to the flash on-board the F9P module.
+If you use ubxtool, then you can use some or all of the following commands:
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,1,7,1` to enable `UBX-NAV-PVT`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,1,7,0` to disable `UBX-NAV-PVT`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,2,19,1` to enable `UBX-RXM-SFRBX`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,2,19,0` to disable `UBX-RXM-SFRBX`.
+* `ubxtool -f /dev/ttyACM0 -e RAWX` to enable `UBX-RXM-RAWX`.
+* `ubxtool -f /dev/ttyACM0 -d RAWX` to disable `UBX-RXM-RAWX`.
+* `ubxtool -f /dev/ttyACM0 -e NMEA` to enable NMEA messages.
+* `ubxtool -f /dev/ttyACM0 -d NMEA` to disable NMEA messages.
+Afterwards, run `ubxtool -f /dev/ttyACM0 -p SAVE`.
+
+## Differential GNSS
 
 If you want to obtain differential fixes in real-time (with potentially cm-accuracy), then you need to feed data from a nearby base station to the GNSS receiver.
 
