@@ -65,7 +65,7 @@ If the driver prints the error `ubx rxmrawx week=0 error` or the error `open: No
 
 If a *permission-denied* error occurs, then the driver might not have access rights to the port.
 
-If no messages appear despite there being view of the sky, you might have to manually enable the binary messages of the receiver, see [below](#enabeling_and_disabling_messages).
+If no messages appear despite there being view of the sky, you might have to manually enable the binary messages of the receiver, see [below](#enabeling-and-disabling-messages).
 
 ## Receiver configuration
 
