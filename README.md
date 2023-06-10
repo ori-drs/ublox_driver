@@ -71,7 +71,17 @@ If no messages appear despite there being view of the sky, you might have to man
 
 You can use different software to change the configuration of the receiver firmware (e.g., the measurement frequency or which messages are broadcasted):
 * [u-center](https://www.u-blox.com/en/product/u-center) provides a graphical user interface for Windows. As of writing, _v22.07_ is the most recent version that supports the ZED-F9P chip.
-* [ubxtool](https://gpsd.gitlab.io/gpsd/ubxtool.html) is a Linux/MacOS command line tool that is part of [GPSd](https://gpsd.gitlab.io/gpsd/). To get the full functionality for the ZED-F9P, you need a recent version. I built _GPSd v25.0_ from source following [these](https://gpsd.gitlab.io/gpsd/building.html) instructions and it worked.
+* [ubxtool](https://gpsd.gitlab.io/gpsd/ubxtool.html) is a Linux/MacOS command line tool that is part of [GPSd](https://gpsd.gitlab.io/gpsd/). To get the full functionality for the ZED-F9P, you need a recent version. I built _GPSd v25.0_ from source following [these](https://gpsd.gitlab.io/gpsd/building.html) instructions and it worked. Basically, I had to do the following:
+
+```shell
+sudo apt install scons
+wget http://download.savannah.gnu.org/releases/gpsd/gpsd-3.25.tar.gz
+tar -xzf gpsd-3.25.tar.gz
+cd gpsd-3.25/
+scons
+sudo scons udev-install
+export PYTHONPATH=${PYTHONPATH}:/usr/local/lib/python3/dist-packages
+```
 
 ## Enabeling and disabling messages
 
