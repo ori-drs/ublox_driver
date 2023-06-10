@@ -87,7 +87,7 @@ export PYTHONPATH=${PYTHONPATH}:/usr/local/lib/python3/dist-packages
 
 The receiver can broadcast two types of messages: human-readable NMEA messages and binary UBX messages.
 This driver needs the binary messages.
-If only NMEA meesages are enabled, you need to manually enable the binary messages (and, optionally, turn NMEA messages off).
+If only NMEA meesages are enabled, you need to manually enable the binary messages (and, optionally, turn off NMEA messages).
 Specifically, you need to enable one or more of the following messages (depending on your use case):
 * `UBX-RXM-RAWX` for raw GNSS measurements from individual satellites.
 * `UBX-RXM-SFRBX` for satellite navigation data broadcasted by the satellites.
@@ -96,7 +96,7 @@ Specifically, you need to enable one or more of the following messages (dependin
 You can find a description of all messages [in the u-blox F9 interface description
 ](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf)
 To enable one or more of these, install _u-center_ or _GPSd/ubxtool_, as described [above](#receiver-configuration).
-If you use u-center, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them.
+If you use _u-center_, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them.
 Next, head to the _Configuration View_, select _CFG_, then _Save current configuration_, then _Send_ to save these settings to the flash on-board the F9P module.
 If you use ubxtool, then you can use some or all of the following commands:
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,1,7,1` to enable `UBX-NAV-PVT`.
