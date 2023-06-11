@@ -99,12 +99,12 @@ To enable one or more of these, install _u-center_ or _GPSd/ubxtool_, as describ
 If you use _u-center_, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them.
 Next, head to the _Configuration View_, select _CFG_, then _Save current configuration_, then _Send_ to save these settings to the flash on-board the F9P module.
 If you use ubxtool, then you can use some or all of the following commands:
-* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,1,7,1` to enable `UBX-NAV-PVT`.
-* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,1,7,0` to disable `UBX-NAV-PVT`.
-* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,2,19,1` to enable `UBX-RXM-SFRBX`.
-* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,2,19,0` to disable `UBX-RXM-SFRBX`.
-* `ubxtool -f /dev/ttyACM0 -e CFG-MSG,2,21,1` to enable `UBX-RXM-RAWX`.
-* `ubxtool -f /dev/ttyACM0 -d CFG-MSG,2,21,1` to disable `UBX-RXM-RAWX`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x01,0x07,1` to enable `UBX-NAV-PVT`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x01,0x07,0` to disable `UBX-NAV-PVT`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x13,1` to enable `UBX-RXM-SFRBX`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x13,0` to disable `UBX-RXM-SFRBX`.
+* `ubxtool -f /dev/ttyACM0 -e CFG-MSG,0x02,0x15,1` to enable `UBX-RXM-RAWX`.
+* `ubxtool -f /dev/ttyACM0 -d CFG-MSG,0x02,0x15,0` to disable `UBX-RXM-RAWX`.
 * `for i in 0x0a 0x45 0x44 0x09 0x00 0x01 0x43 0x42 0x0d 0x40 0x47 0x06 0x02 0x07 0x03 0x0b 0x04 0x41 0x0f 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,$i,1; done` to enable all standard NMEA messages.
 * `for i in 0x0a 0x45 0x44 0x09 0x00 0x01 0x43 0x42 0x0d 0x40 0x47 0x06 0x02 0x07 0x03 0x0b 0x04 0x41 0x0f 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,$i,0; done` to disable all standard NMEA messages.
 * `for i in 0x00 0x01 0x0d 0x02 0x04 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf7,$i,1; done` to enable all secondary NMEA messages.
