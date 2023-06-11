@@ -103,10 +103,16 @@ If you use ubxtool, then you can use some or all of the following commands:
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,1,7,0` to disable `UBX-NAV-PVT`.
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,2,19,1` to enable `UBX-RXM-SFRBX`.
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,2,19,0` to disable `UBX-RXM-SFRBX`.
-* `ubxtool -f /dev/ttyACM0 -e RAWX` to enable `UBX-RXM-RAWX`.
-* `ubxtool -f /dev/ttyACM0 -d RAWX` to disable `UBX-RXM-RAWX`.
-* `ubxtool -f /dev/ttyACM0 -e NMEA` to enable NMEA messages.
-* `ubxtool -f /dev/ttyACM0 -d NMEA` to disable NMEA messages.
+* `ubxtool -f /dev/ttyACM0 -e CFG-MSG,2,21,1` to enable `UBX-RXM-RAWX`.
+* `ubxtool -f /dev/ttyACM0 -d CFG-MSG,2,21,1` to disable `UBX-RXM-RAWX`.
+* `for i in 0x0a 0x45 0x44 0x09 0x00 0x01 0x43 0x42 0x0d 0x40 0x47 0x06 0x02 0x07 0x03 0x0b 0x04 0x41 0x0f 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf1,$i,1; done` to enable all standard NMEA messages.
+* `for i in 0x0a 0x45 0x44 0x09 0x00 0x01 0x43 0x42 0x0d 0x40 0x47 0x06 0x02 0x07 0x03 0x0b 0x04 0x41 0x0f 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf1,$i,0; done` to disable all standard NMEA messages.
+* `for i in 0x00, 0x01, 0x0d, 0x02, 0x04, 0x05, 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf1,$i,1; done` to enable all secondary NMEA messages.
+* `for i in 0x00, 0x01, 0x0d, 0x02, 0x04, 0x05, 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf1,$i,0; done` to disable all secondary NMEA messages.
+* `for i in 0x41, 0x00, 0x40, 0x03, 0x04; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf1,$i,1; done` to enable all u-blox NMEA messages.
+* `for i in 0x41, 0x00, 0x40, 0x03, 0x04; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf1,$i,0; done` to disable all u-blox NMEA messages.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,0x00,1` to enable only the NMEA fix output (GGA).
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,0x00,0` to disable only the NMEA fix output (GGA).
 
 Afterwards, run `ubxtool -f /dev/ttyACM0 -p SAVE`.
 
