@@ -113,6 +113,7 @@ If you use ubxtool, then you can use some or all of the following commands:
 * `for i in 0x41 0x00 0x40 0x03 0x04; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf1,$i,0; done` to disable all u-blox NMEA messages.
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,0x00,1` to enable only the NMEA fix output (GGA).
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,0x00,0` to disable only the NMEA fix output (GGA).
+* `ubxtool -f /dev/ttyACM0 -p CFG-RATE,100` to set the measurement interval to 100 ms (= the measurement rate to 10 Hz). The default is 100 ms, but you might want to choose something else.
 
 Afterwards, run `ubxtool -f /dev/ttyACM0 -p SAVE`.
 
