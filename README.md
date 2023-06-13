@@ -179,11 +179,11 @@ To obtain differential fixes **offline** with post-processing, you can do the fo
 
 # Assisted GNSS (A-GNSS)
 
-You do not want to use differential GNSS, but reduce your time-to-first-fix to a few seconds? Then this section is for you. All you need is an internet connection at time of configuration.
+You do not want to use differential GNSS, but want to reduce your time-to-first-fix to a few seconds? Then this section is for you. All you need is an internet connection at time of configuration.
 
 The basic idea is to supply the receiver with assistance data, like satellite navigation data or an initial position during start-up. The first step is to download up-to-date satellite navigation data from the internet. The second step is to flash it to the receiver.
 
-There are several option where to source the satellite navigation data. One option is [u-blox' AssistNow Service](https://developer.thingstream.io/guides/location-services/assistnow-user-guide). Data from AssistNow Online is valid for a few hours, data from AssistNow Offline up to 5 weeks. To use the services, you need a _token_. If based in the ORI, you can try to use my token. Otherwise, you can [register for one](https://www.u-blox.com/en/assistnow-service-evaluation-token-request-form). Then just connect your receiver via USB and do the following to download data from AssistNow Online and send it to the receiver's serial port:
+There are several options where to source the satellite navigation data. One option is [u-blox' AssistNow Service](https://developer.thingstream.io/guides/location-services/assistnow-user-guide). Data from AssistNow Online is valid for a few hours, data from AssistNow Offline up to 5 weeks. To use the services, you need a _token_. If based in the ORI, you can try to use [my token](https://drive.google.com/file/d/1AvLIvJe5UZBuxWclstPNm3llsoAr9bX-/view?usp=sharing). Otherwise, you can [register for one](https://www.u-blox.com/en/assistnow-service-evaluation-token-request-form). Then just connect your receiver via USB and do the following to download data from AssistNow Online and send it to the receiver's serial port:
 
 ```shell
 token="your_token"
@@ -193,9 +193,17 @@ accuracy="3000"
 curl "https://online-live1.services.u-blox.com/GetOnlineData.ashx?token=$token;gnss=gps,glo,gal,bds,qzss;datatype=eph,alm,aux,pos;lat=$latitude;lon=$longitude;pacc=$accuracy" -o /dev/ttyACM0
 ```
 
-The _latitude_, _longitude_, and _accuracy_ parameters are optional. In this example, I use the Carfax Tower as the initial location (specified in decimal degrees) and an uncertainity of this initial location of 3000 meter.
+The _latitude_, _longitude_, and _accuracy_ parameters are optional. In this example, I use the Carfax Tower as the initial location (specified in decimal degrees) and an uncertainity of this initial location of 3000 meter. For more parameters, check out [the user guide](https://developer.thingstream.io/guides/location-services/assistnow-user-guide).
 
 The download size should be several kilobytes. If it's just a few bytes, then the request did not work. You can check the receiver's internal database with `ubxtool -f /dev/ttyACM0 -c 0x01,0x34`. There should be lots of satellites after transferring the assistance data. If you wish to reset the database for any reason, run `ubxtool -f /dev/ttyACM0 -p COLDBOOT`.
+
+You can download data from AssistNow Offline with
+
+```shell
+curl "https://offline-live1.services.u-blox.com/GetOfflineData.ashx?token=$token;gnss=gps,glo,bds,gal"
+```
+
+However, I have not been able to succesfully use the data on a receiver yet.
 
 # ublox_driver
 
