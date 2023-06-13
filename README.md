@@ -82,6 +82,8 @@ scons
 sudo scons udev-install
 export PYTHONPATH=${PYTHONPATH}:/usr/local/lib/python3/dist-packages
 ```
+* Of course, you can also just figure out the binary representation of your configuration commands in [the u-blox F9 interface description
+](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf) and just write them straight to your serial port `/dev/ttyACM0`...
 
 ## Enabeling and disabling messages
 
@@ -93,7 +95,7 @@ Specifically, you need to enable one or more of the following messages (dependin
 * `UBX-RXM-SFRBX` for satellite navigation data broadcasted by the satellites.
 * `UBX-NAV-PVT` for pre-computed GNSS fixes.
 
-You can find a description of all messages [in the u-blox F9 interface description
+You can find a description of all messages in [the u-blox F9 interface description
 ](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf).
 To enable one or more of these, install _u-center_ or _GPSd/ubxtool_, as described [above](#receiver-configuration).
 If you use _u-center_, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them.
@@ -117,7 +119,7 @@ If you use ubxtool, then you can use some or all of the following commands:
 
 Afterwards, run `ubxtool -f /dev/ttyACM0 -p SAVE`.
 
-## Differential GNSS
+## Differential GNSS (D-GNSS)
 
 If you want to obtain differential fixes in real-time (with potentially cm-accuracy), then you need to feed data from a nearby base station to the GNSS receiver.
 
@@ -174,6 +176,26 @@ To obtain differential fixes **offline** with post-processing, you can do the fo
 * Get the satellite navigation data from [here](https://igs.bkg.bund.de/root_ftp/IGS/BRDC/). Choose the correct year and day-of-the year and the file named `BRDM00DLR_S_YYYYDDD0000_01D_MN.rnx.gz`. (Alternatively, get the satellite navigation data from the base station, too.)
 * Optionally, get SP3, CLK, ERP, and ION files from [here](https://igs.bkg.bund.de/root_ftp/IGS/products/orbits/). Choose the correct [GPS week number](https://www.ngs.noaa.gov/CORS/Gpscal.shtml) and the correct day of the week (Sunday=0, Monday=1, ...) to identify the correct directory and file. Files starting with `igs` are better than files starting `igr`, which are better than the `igu` files. Using these files should improve performance since they are more accurate than the broadcasted data mentioned above.
 * Use RTKLIB's RTKPOST program with all these files to obatain a differential solution. If you are uncertain which options to choose, then have a look at the section in [the RTKLIB manual](http://www.rtklib.com/prog/manual_2.4.2.pdf) that describes RTKPOST. Probably the `Kinematic` mode is a good starting point.
+
+# Assisted GNSS (A-GNSS)
+
+You do not want to use differential GNSS, but reduce your time-to-first-fix to a few seconds? Then this section is for you. All you need is an internet connection at time of configuration.
+
+The basic idea is to supply the receiver with assistance data, like satellite navigation data or an initial position during start-up. The first step is to download up-to-date satellite navigation data from the internet. The second step is to flash it to the receiver.
+
+There are several option where to source the satellite navigation data. One option is [u-blox' AssistNow Service](https://developer.thingstream.io/guides/location-services/assistnow-user-guide). Data from AssistNow Online is valid for a few hours, data from AssistNow Offline up to 5 weeks. To use the services, you need a _token_. If based in the ORI, you can try to use my token. Otherwise, you can [register for one](https://www.u-blox.com/en/assistnow-service-evaluation-token-request-form). Then just connect your receiver via USB and do the following to download data from AssistNow Online and send it to the receiver's serial port:
+
+```shell
+token="your_token"
+latitude="51.751920"
+longitude="-1.258180"
+accuracy="3000"
+curl "https://online-live1.services.u-blox.com/GetOnlineData.ashx?token=$token;gnss=gps,glo,gal,bds,qzss;datatype=eph,alm,aux,pos;lat=$latitude;lon=$longitude;pacc=$accuracy" -o /dev/ttyACM0
+```
+
+The _latitude_, _longitude_, and _accuracy_ parameters are optional. In this example, I use the Carfax Tower as the initial location (specified in decimal degrees) and an uncertainity of this initial location of 3000 meter.
+
+The download size should be several kilobytes. If it's just a few bytes, then the request did not work. You can check the receiver's internal database with `ubxtool -f /dev/ttyACM0 -c 0x01,0x34`. There should be lots of satellites after transferring the assistance data. If you wish to reset the database for any reason, run `ubxtool -f /dev/ttyACM0 -p COLDBOOT`.
 
 # ublox_driver
 
