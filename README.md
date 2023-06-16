@@ -126,13 +126,13 @@ If you want to obtain differential fixes in real-time (with potentially cm-accur
 If the **receiver has Bluetooth** (like the C099-F9P), then you can do the following:
 
 * Pair the receiver with your phone via Bluetooth. The C099-F9P should have a name of the form *BT_C099-F9P_XXXX*. The receiver does not appear as a Bluetooth device? For the C099-F9P, you might have to enable it first: Plug in the receiver via USB, open a serial terminal (baud rate: 460800; serial frame: 8 bits, 1 stop bit, no parity; flow control: none; local echo off/disabled) and run the command `/bt_visible/run`.
-* Install an NTRIP client (for example, [the Lefebure NTRIP Client](https://play.google.com/store/apps/details?id=com.lefebure.ntripclient&hl=en_GB&gl=US)) on your phone.
+* Install an NTRIP client (for example, [Lefebure](https://play.google.com/store/apps/details?id=com.lefebure.ntripclient&hl=en_GB&gl=US), [YCServer](https://play.google.com/store/apps/details?id=com.youcors.ycserver&hl=en_GB&gl=US), or [Bluecover](https://play.google.com/store/apps/details?id=pt.bluecover.ntripusb&hl=en_GB&gl=US)) on your phone.
 * In the receiver settings, select the Bluetooth option and connect to the GNSS receiver.
-* In the NTRIP caster section, select a base station. For example, the one near Bicester has the IP address 3.23.52.207 ([rtk2go.com](rtk2go.com)), the port 2101, the mount point / stream name OXTS1, and no username and no password. It uses the NTRIP Rev 1 protocol. You can find other base stations [in this table](http://rtk2go.com:2101). For example, you could search for stations with country code GBR, which provide at least GPS, Glonass (GLO), Galileo (GAL), and BeiDou (BDS) data. However, some streams might be password protected. Another option is to use one of the NTRIP broadcatsers from [the BKG](https://igs.bkg.bund.de/ntrip/). Their streams are lsited [here](https://igs.bkg.bund.de/ntrip/streams). For example, the station [LICC00GBR](https://igs.bkg.bund.de/api/collections/stations/items/LICC00GBR) is in London. However, you need to [register](https://register.rtcm-ntrip.org/cgi-bin/registration.cgi) first, which is free. Then, enter your username and password in your NTRIP client.
+* In the NTRIP caster section, select a base station. For example, the one near Bicester has the IP address 3.23.52.207 ([rtk2go.com](rtk2go.com)), the port 2101, the mount point / stream name OXTS1, and no username and no password. It uses the NTRIP Rev 1 protocol. You can find other base stations [in this table](http://rtk2go.com:2101). For example, you could search for stations with country code GBR, which provide at least GPS, Glonass (GLO), Galileo (GAL), and BeiDou (BDS) data. However, some streams might be password protected. Another option is to use one of the NTRIP broadcatsers from [the BKG](https://igs.bkg.bund.de/ntrip/). Their streams are listed [here](https://igs.bkg.bund.de/ntrip/streams) and the host URL is [igs-ip.net](igs-ip.net). For example, the station [LICC00GBR](https://igs.bkg.bund.de/api/collections/stations/items/LICC00GBR) is in London. However, you need to [register](https://register.rtcm-ntrip.org/cgi-bin/registration.cgi) first, which is free. Then, enter your username and password in your NTRIP client.
 * Run the client and stream the data from the base to the receiver.
 * Check that the flag `diff_soln` in the fixes in the `receiver_pvt` topic is `True` after your started to stream the data.
 
-If the **receiver does not have Bluetooth**, but the **NUC has internet**, then follow the instructions in the section *Obtain RTK Solution (Optional)* below. 
+If the **receiver does not have Bluetooth**, but it is connected to a NUC and the **NUC has internet**, then follow the instructions in the section *Obtain RTK Solution (Optional)* below. 
 
 Summary of steps here.
 
@@ -204,6 +204,8 @@ curl "https://offline-live1.services.u-blox.com/GetOfflineData.ashx?token=$token
 ```
 
 However, I have not been able to succesfully use the data on a receiver yet.
+
+Another option to load assistance data to your receiver is to briefly connect it to your phone (via USB or Bluetooth using, e.g., [YCServer](https://play.google.com/store/apps/details?id=com.youcors.ycserver&hl=en_GB&gl=US), [Bluecover](https://play.google.com/store/apps/details?id=pt.bluecover.ntripusb&hl=en_GB&gl=US), or [Lefebure](https://play.google.com/store/apps/details?id=com.lefebure.ntripclient&hl=en_GB&gl=US)) and to tap into an online NTRIP server stream, as described in the D-GNSS section above.
 
 # ublox_driver
 
