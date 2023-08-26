@@ -95,8 +95,7 @@ Specifically, you need to enable one or more of the following messages (dependin
 * `UBX-RXM-SFRBX` for satellite navigation data broadcasted by the satellites.
 * `UBX-NAV-PVT` for pre-computed GNSS fixes.
 
-You can find a description of all messages in [the u-blox F9 interface description
-](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf).
+You can find a description of all messages in [the u-blox F9 interface description](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf).
 To enable one or more of these, install _u-center_ or _GPSd/ubxtool_, as described [above](#receiver-configuration).
 If you use _u-center_, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them.
 Next, head to the _Configuration View_, select _CFG_, then _Save current configuration_, then _Send_ to save these settings to the flash on-board the F9P module.
