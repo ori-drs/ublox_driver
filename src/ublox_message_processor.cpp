@@ -50,14 +50,16 @@ UbloxMessageProcessor::UbloxMessageProcessor(ros::NodeHandle& nh) :
 void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
 {
     if (!verify_msg(data, len))
+    {
+        LOG(ERROR) << "Invalid message length.";
         return;
+    }
     
     const uint16_t msg_type = (data[2]<<8) | data[3];
 
     if (msg_type == UBX_RXMRAWX_ID)
     {
         std::vector<ObsPtr> meas = parse_meas_msg(data, len);
-        if (meas.empty())   return;
         gnss_comm_msgs::GnssMeasMsg meas_msg = meas2msg(meas);
         pub_range_meas_.publish(meas_msg);
         return;
@@ -66,7 +68,7 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
     {
         std::vector<double> iono_params;
         EphemBasePtr ephem = parse_subframe(data, len, iono_params);
-        if (ephem && ephem->ttr.time!=0)
+        if (ephem)
         {
             if (satsys(ephem->sat, NULL) == SYS_GLO)
             {
@@ -83,8 +85,10 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
         {
             // publish ionosphere parameters
             gnss_comm_msgs::StampedFloat64Array iono_msg;
-            if (ephem && ephem->ttr.time!=0)
+            if (ephem)
+            {
                 iono_msg.header.stamp = ros::Time(time2sec(ephem->ttr));
+            }
             std::copy(iono_params.begin(), iono_params.end(), std::back_inserter(iono_msg.data));
             pub_iono_.publish(iono_msg);
         }
@@ -93,17 +97,24 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
     else if (msg_type == UBX_TIM_TP_ID)
     {
         TimePulseInfoPtr tp_info = parse_time_pulse(data, len);
-        if (tp_info && tp_info->time.time != 0)
+        if (!tp_info)
         {
-            gnss_comm_msgs::GnssTimePulseInfoMsg tp_info_msg = tp_info2msg(tp_info);
-            pub_tp_info_.publish(tp_info_msg);
+            LOG(ERROR) << "Invalid time in message of type 'UBX_TIM_TP_ID'.";
+            return;
         }
+        gnss_comm_msgs::GnssTimePulseInfoMsg tp_info_msg = tp_info2msg(tp_info);
+        pub_tp_info_.publish(tp_info_msg);
         return;
     }
     else if (msg_type == UBX_NAVPOS_ID)
     {
         PVTSolutionPtr pvt_soln = parse_pvt(data, len);
-        if (!pvt_soln || pvt_soln->time.time == 0)    return;
+        sensor_msgs::NavSatFix lla_msg;
+        if (!pvt_soln)
+        {
+            LOG(ERROR) << "No solution for message of type 'UBX_NAVPOS_ID'.";
+            return;
+        }
 
         // add RTK station offset if appliable
         if (pvt_soln->carr_soln == 1 || pvt_soln->carr_soln == 2)
@@ -116,16 +127,21 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
             pvt_soln->lon = pvt_lla.y();
             pvt_soln->hgt = pvt_lla.z();
         }
-
         gnss_comm_msgs::GnssPVTSolnMsg pvt_msg = pvt2msg(pvt_soln);
         pub_pvt_.publish(pvt_msg);
-
-        sensor_msgs::NavSatFix lla_msg;
+        
         lla_msg.header.stamp = ros::Time(time2sec(pvt_soln->time));
         lla_msg.latitude    = pvt_soln->lat;
         lla_msg.longitude   = pvt_soln->lon;
         lla_msg.altitude    = pvt_soln->hgt;
-        lla_msg.status.status = static_cast<int8_t>(pvt_soln->fix_type);
+        if (pvt_soln->valid_fix)
+        {
+            lla_msg.status.status = static_cast<int8_t>(pvt_soln->fix_type);
+        }
+        else
+        {
+            lla_msg.status.status = sensor_msgs::NavSatStatus::STATUS_NO_FIX;
+        }
         lla_msg.status.service = static_cast<uint16_t>(pvt_soln->carr_soln);
         pub_lla_.publish(lla_msg);
         return;
@@ -137,12 +153,18 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
 int UbloxMessageProcessor::check_ack(const uint8_t *data, size_t len)
 {
     if (!verify_msg(data, len))
+    {
         return 0;
+    }
     const uint16_t msg_type = (data[2]<<8) | data[3];
     if (msg_type == UBX_ACK_ACK_ID)
+    {
         return 1;
+    }
     else if (msg_type == UBX_ACK_NAK_ID)
+    {
         return -1;
+    }
     
     // ignore other messages
     return 0;
@@ -172,7 +194,7 @@ bool UbloxMessageProcessor::verify_msg(const uint8_t *data, const size_t len)
 
     if (!check_checksum(data, len))
     {
-        LOG(ERROR) << "Invalid checksum.\n";
+        LOG(ERROR) << "Invalid checksum.";
         return false;
     }
 
@@ -235,13 +257,18 @@ PVTSolutionPtr UbloxMessageProcessor::parse_pvt(const uint8_t *msg_data, const u
         LOG(ERROR) << "ubx nav-pvt message length error. len=" << msg_len;
         return pvt_soln;
     }
-    if (curr_time.time == 0)    return pvt_soln;
     const uint8_t *p = msg_data+6;
     uint32_t itow = *reinterpret_cast<const uint32_t*>(p);
     uint32_t week = 0;
     double tow = time2gpst(curr_time, &week);
-    if      (itow*1e-3 > tow+302400.0)    --week;
-    else if (itow*1e-3 < tow-302400.0)    ++week;
+    if (itow*1e-3 > tow+302400.0)
+    {
+        --week;
+    }
+    else if (itow*1e-3 < tow-302400.0)
+    {
+        ++week;
+    }
     gtime_t time = gpst2time(week, itow*1e-3);
     if (false && (p[11]&0x04) && ((p[22]&0xF0) == 0xE0))    // skip UTC time check
     {
@@ -375,7 +402,10 @@ std::vector<ObsPtr> UbloxMessageProcessor::parse_meas_msg(const uint8_t *msg_dat
         obs->dopp_std.push_back(0.002*(1<<dopp_std));
         obs->status.push_back(tck_sta&0x0F);
     }
-    if (!obs_meas.empty())   curr_time = time;   // update current time
+    if (!obs_meas.empty())
+    {
+        curr_time = time;   // update current time
+    }
     return obs_meas;
 }
 
@@ -460,7 +490,10 @@ int UbloxMessageProcessor::decode_GLO_subframe(const uint8_t *msg_data, const ui
     }
     memcpy(subfrm[glo_ephem->sat-1]+(m-1)*10,buff,10);
     
-    if (m!=4) return 0;
+    if (m!=4)
+    {
+        return 0;
+    }
     
     /* decode glonass ephemeris strings */
     decode_GLO_ephem(glo_ephem);
@@ -516,17 +549,35 @@ int UbloxMessageProcessor::decode_GLO_ephem(GloEphemPtr glo_ephem)
     slot                    =getbitu(buff,i, 5);           i+= 5;
                              getbitu(buff,i, 2);                    // skip
     
-    if (ft == 2)        glo_ephem->ura = 2.5;   
-    else if (ft < 5)    glo_ephem->ura = ft+1.0;
-    else if (ft == 5)   glo_ephem->ura = 7.0;
-    else if (ft < 10)   glo_ephem->ura = 10.0+(ft-6)*2.0;
-    else if (ft < 15)   glo_ephem->ura = 1 << (ft-5);
-    else                glo_ephem->ura = -1.0;
+    if (ft == 2)
+    {
+        glo_ephem->ura = 2.5;
+    }
+    else if (ft < 5)
+    {
+        glo_ephem->ura = ft+1.0;
+    }
+    else if (ft == 5)
+    {
+        glo_ephem->ura = 7.0;
+    }
+    else if (ft < 10)
+    {
+        glo_ephem->ura = 10.0+(ft-6)*2.0;
+    }
+    else if (ft < 15)
+    {
+        glo_ephem->ura = 1 << (ft-5);
+    }
+    else
+    {
+        glo_ephem->ura = -1.0;
+    }
 
     if (frn1!=1||frn2!=2||frn3!=3||frn4!=4) 
     {
-        // LOG(ERROR) << "decode_GLO_ephem error: frn=" << frn1 << ' ' 
-        //            << frn2 << ' ' << frn3 << ' ' << frn4;
+        LOG(ERROR) << "decode_GLO_ephem error: frn=" << frn1 << ' ' 
+                    << frn2 << ' ' << frn3 << ' ' << frn4;
         return -1;
     }
     if (glo_ephem->sat != sat_no(SYS_GLO,slot)) 
@@ -851,19 +902,34 @@ int UbloxMessageProcessor::decode_GAL_subframe(const uint8_t *msg_data, const ui
     type=getbitu(buff,2,6); /* word type */
     
     /* skip word except for ephemeris, iono, utc parameters */
-    if (type>6) return 0;
+    if (type>6)
+    {
+        return 0;
+    }
     
     /* clear word 0-6 flags */
-    if (type==2) subfrm[ephem->sat-1][112]=0;
+    if (type==2)
+    {
+        subfrm[ephem->sat-1][112]=0;
+    }
     
     /* save page data (112 + 16 bits) to frame buffer */
     k=type*16;
-    for (i=0,j=2;i<14;i++,j+=8) subfrm[ephem->sat-1][k++]=getbitu(buff   ,j,8);
-    for (i=0,j=2;i< 2;i++,j+=8) subfrm[ephem->sat-1][k++]=getbitu(buff+16,j,8);
+    for (i=0,j=2;i<14;i++,j+=8)
+    {
+        subfrm[ephem->sat-1][k++]=getbitu(buff   ,j,8);
+    }
+    for (i=0,j=2;i< 2;i++,j+=8)
+    {
+        subfrm[ephem->sat-1][k++]=getbitu(buff+16,j,8);
+    }
     
     /* test word 0-6 flags */
     subfrm[ephem->sat-1][112]|=(1<<type);
-    if (subfrm[ephem->sat-1][112]!=0x7F) return 0;
+    if (subfrm[ephem->sat-1][112]!=0x7F)
+    {
+        return 0;
+    }
 
     decode_GAL_ephem(ephem);
     return 0;
@@ -907,11 +973,26 @@ int UbloxMessageProcessor::decode_GAL_ephem(EphemPtr ephem)
     ephem->crc      =getbits(buff,i,16)*P2_5;         i+=16;
     ephem->crs      =getbits(buff,i,16)*P2_5;         i+=16;
     uint32_t sisa   =getbitu(buff,i, 8);
-    if (sisa < 50)       ephem->ura = 0.01*sisa;
-    else if (sisa < 75)  ephem->ura = 0.5+0.02*(sisa-50);
-    else if (sisa < 100) ephem->ura = 1.0+0.04*(sisa-75);
-    else if (sisa < 125) ephem->ura = 2.0+0.16*(sisa-100);
-    else                 ephem->ura = -1.0;
+    if (sisa < 50)
+    {
+        ephem->ura = 0.01*sisa;
+    }
+    else if (sisa < 75)
+    {
+        ephem->ura = 0.5+0.02*(sisa-50);
+    }
+    else if (sisa < 100)
+    {
+        ephem->ura = 1.0+0.04*(sisa-75);
+    }
+    else if (sisa < 125)
+    {
+        ephem->ura = 2.0+0.16*(sisa-100);
+    }
+    else
+    {
+        ephem->ura = -1.0;
+    }
     
     i=128*4; /* word type 4 */
     type[4]         =getbitu(buff,i, 6);              i+= 6;
@@ -964,8 +1045,14 @@ int UbloxMessageProcessor::decode_GAL_ephem(EphemPtr ephem)
     ephem->health=(e5b_hs<<7)|(e5b_dvs<<6)|(e1b_hs<<1)|e1b_dvs;
     ephem->ttr=gst2time(week,tow);
     tt=time_diff(gst2time(week,toes),ephem->ttr); /* week complient to toe */
-    if      (tt> 302400.0) week--;
-    else if (tt<-302400.0) week++;
+    if (tt> 302400.0)
+    {
+        week--;
+    }
+    else if (tt<-302400.0)
+    {
+        week++;
+    }
     ephem->toe=gst2time(week,toes);
     ephem->toc=gst2time(week,toc);
     ephem->toe_tow = time2gpst(ephem->toe, &ephem->week);
@@ -1402,8 +1489,13 @@ int UbloxMessageProcessor::test_glostr(const uint8_t *data)
     for (uint32_t i = 0; i < 8; ++i) 
     {
         for (uint32_t j = 0, cs = 0; j < 11; ++j)
+        {
             cs ^= xor_8bit[data[j]&mask_hamming[i][j]];
-        if (cs) n++;
+        }
+        if (cs)
+        {
+            n++;
+        }
     }
     return n==0 || (n==2 && cs);
 }
@@ -1412,7 +1504,9 @@ uint32_t UbloxMessageProcessor::crc24q(const uint8_t *data, const uint32_t size)
 {
     uint32_t crc = 0;
     for (uint32_t i = 0; i < size; ++i) 
+    {
         crc = ( (crc<<8) & 0xFFFFFF) ^ tbl_CRC24Q[ (crc>>16) ^ data[i]];
+    }
     return crc;
 }
 
@@ -1446,9 +1540,13 @@ void UbloxMessageProcessor::setbitu(uint8_t *buff, const uint32_t pos, const uin
     for (uint32_t i = pos; i < pos+len; ++i, mask>>=1)
     {
         if (data & mask)
+        {
             buff[i/8] |= (1u<<(7-i%8));
+        }
         else
+        {
             buff[i/8] &= ~(1u<<(7-i%8));
+        }
     }
 }
 
@@ -1456,14 +1554,19 @@ uint32_t UbloxMessageProcessor::getbitu(const uint8_t *buff, const uint32_t pos,
 {
     uint32_t bits = 0;
     for (size_t i = pos; i < pos+len; ++i)
+    {
         bits = (bits<<1) + ((buff[i/8]>>(7-i%8))&1u);
+    }
     return bits;
 }
 
 int UbloxMessageProcessor::getbits(const uint8_t *buff, const uint32_t pos, const uint32_t len) const
 {
     uint32_t bits = getbitu(buff, pos, len);
-    if (len == 0 || len >= 32 || !(bits&(1u<<(len-1)))) return (int)bits;
+    if (len == 0 || len >= 32 || !(bits&(1u<<(len-1))))
+    {
+        return (int)bits;
+    }
     return (int)(bits|(~0u<<len));  // extend sign
 }
 
@@ -1477,9 +1580,13 @@ int UbloxMessageProcessor::getbits2(const uint8_t *buff, const uint32_t p1, cons
                            const uint32_t p2, const uint32_t l2) const
 {
     if (getbitu(buff,p1,1))
+    {
         return (int)((getbits(buff,p1,l1)<<l2)+getbitu(buff,p2,l2));
+    }
     else
+    {
         return (int)getbitu2(buff,p1,l1,p2,l2);
+    }
 }
 
 uint32_t UbloxMessageProcessor::getbitu3(const uint8_t *buff, const uint32_t p1, const uint32_t l1, 
@@ -1492,10 +1599,14 @@ int UbloxMessageProcessor::getbits3(const uint8_t *buff, const uint32_t p1, cons
                      const uint32_t l2, const uint32_t p3, const uint32_t l3) const
 {
     if (getbitu(buff,p1,1))
+    {
         return (int)((getbits(buff,p1,l1)<<(l2+l3))+
                    (getbitu(buff,p2,l2)<<l3)+getbitu(buff,p3,l3));
+    }
     else
+    {
         return (int)getbitu3(buff,p1,l1,p2,l2,p3,l3);
+    }
 }
 
 double UbloxMessageProcessor::getbitg(const uint8_t *buff, const int pos, const int len) const
