@@ -32,7 +32,7 @@ In case the receiver has never been used with ROS before make sure that you foll
 $ sudo chmod 666 /dev/ttyACM0
 ```
 
-or alternatively permanently by adding a user to the `dialout` group with
+or alternatively permanently by adding a user to the `dialout` group with:
 
 ```shell
 $ sudo adduser $USER dialout
@@ -40,7 +40,7 @@ $ sudo adduser $USER dialout
 
 and logging out and in again.
 
-Finally **build** the driver using catkin tools:
+Finally, **build** the driver using catkin tools:
 
 ```shell
 $ cd /path/to/your_catkin_ws
@@ -58,7 +58,7 @@ It might be worth it to check out [Section 5](#5-synchronize-system-time) of the
 
 ## Troubleshooting
 
-If the driver prints the errors `ubx rxmrawx week=0 error` or `open: No such file or directory`, a cause can be that the port in [the configuration file](/config/driver_config.yaml) is set incorrectly.
+If the driver prints the errors `ubx rxmrawx week=0 error` or `open: No such file or directory`, a cause can be that the port in [the configuration file](./config/driver_config.yaml) is set incorrectly.
 
 In case a permission-denied error occurs, then the driver might not have access rights to the port, be sure that you have granted the user permissions to read and write to the port.
 
@@ -68,7 +68,7 @@ If no messages appear despite there being view of the sky, you might have to man
 
 You can use different software to change the configuration of the receiver firmware (e.g., the measurement frequency or which messages are broadcasted):
 * [**u-center**](https://www.u-blox.com/en/product/u-center) provides a graphical user interface for Windows. As of writing, _v22.07_ is the most recent version that supports the ZED-F9P chip.
-* [**ubxtool**](https://gpsd.gitlab.io/gpsd/ubxtool.html) is a Linux/MacOS command line tool that is part of [GPSd](https://gpsd.gitlab.io/gpsd/). To get the full functionality for the ZED-F9P, you need a recent version (which at the time of writing was not available when installing from `apt`). I built _GPSd v25.0_ from source following [these](https://gpsd.gitlab.io/gpsd/building.html) instructions:
+* [**ubxtool**](https://gpsd.gitlab.io/gpsd/ubxtool.html) is a Linux/MacOS command line tool that is part of [GPSd](https://gpsd.gitlab.io/gpsd/). To get the full functionality for the ZED-F9P, you need a recent version (which at the time of writing was not available when installing from `apt` on Ubuntu 20). I built _GPSd v25.0_ from source following [these](https://gpsd.gitlab.io/gpsd/building.html) instructions:
 
 ```shell
 $ sudo apt install scons
@@ -81,9 +81,9 @@ $ export PYTHONPATH=${PYTHONPATH}:/usr/local/lib/python3/dist-packages
 ```
 * Of course, you can also just figure out the binary representation of your configuration commands in [the u-blox F9 interface description](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf) and just write them straight to your serial port `/dev/ttyACM0`.
 
-#### Enabeling and disabling messages
+## Enabeling and disabling messages
 
-The following section discusses how the receiver settings can be changed by means of `ubxtool` from `gpsd`.
+The receiver can broadcast two different types of messages: **human-readable NMEA messages** and **binary UBX messages**.
 
 For finding out which port is being used and what messages are currently published, you might use `screen` (`$ sudo apt-get install screen`):
 
@@ -93,8 +93,6 @@ $ screen /dev/ttyACM0
 
 In case the serial port is not used by anyone else this should output periodic messages.
 
-The receiver can broadcast two different types of messages: **human-readable NMEA messages** and **binary UBX messages**.
-
 The human-readable NMEA messages (if published) will look as follows:
 
 ```shell
@@ -103,7 +101,7 @@ $GNGLL,5145.63813,N,00115.64255,W,180955.00,A,A*6A
 
 corresponding to a measurement corresponding to 51° 45.63813" N und 1° 15.64255" W.
 
-While the binary messages will be displayed only as special character sequences.
+The binary messages will be displayed as special character sequences.
 
 **This driver requires only the binary messages to be activated in order to work.** If the NMEA meesages are enabled the code will get stuck in an infinite loop inside the serial handler. You need to manually enable the binary messages and turn off NMEA messages in case the `screen` command outputs any human-readable messages.
 Specifically, you need to **enable the following messages** (depending on your use case):
@@ -114,9 +112,10 @@ Specifically, you need to **enable the following messages** (depending on your u
 
 You can find a description of all messages in [the u-blox F9 interface description](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf).
 
-To change the current settings, install GPSd/ubxtool, as described [above](#receiver-configuration).
+To change the current settings, install _u-center_ or _GPSd/ubxtool_, as described [above](#receiver-configuration).
 
-If you use _u-center_, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them. Next, head to the _Configuration View_, select _CFG_, then _Save current configuration_, then _Send_ to save these settings to the flash on-board the F9P module.
+If you use _u-center_, start the graphical user interface, connect the receiver via the left-most button, open the _Messages View_ and enable/disable messages by right-clicking on them.
+Next, head to the _Configuration View_, select _CFG_, then _Save current configuration_, then _Send_ to save these settings to the flash on-board the F9P module.
 
 If you use `ubxtool`, then first make sure that you can read and write to the receiver with:
 
@@ -136,15 +135,11 @@ WARNING:  protVer is 10.00, should be 27.12.  Hint: use option "-P 27.12"
 
 Depending on the version of `ubxtool` that you are using you might have to give the data values as hexadecimal (e.g. `0x01`) or decimal (e.g. `1` or `$((0x01))`) values.
 
-Then follow through with **enabling `UBX-NAV-PVT`, `UBX-RXM-SFRBX` and `UBX-RXM-RAWX`**:
-
+If you use ubxtool, then you can use some or all of the following commands to **enable `UBX-NAV-PVT`, `UBX-RXM-SFRBX` and/or `UBX-RXM-RAWX`** (remember that you may not need all of them for your use case) and **disable all NMEA messages**:
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x01,0x07,1` to enable `UBX-NAV-PVT`.
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x13,1` to enable `UBX-RXM-SFRBX`.
 * `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x15,1` to enable `UBX-RXM-RAWX`.
-
-and **disable all NMEA messages**:
-
-- `for i in 0x0a 0x45 0x44 0x09 0x00 0x01 0x43 0x42 0x0d 0x40 0x47 0x06 0x02 0x07 0x03 0x0b 0x04 0x41 0x0f 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,$i,0; done` to disable all standard NMEA messages.
+* `for i in 0x0a 0x45 0x44 0x09 0x00 0x01 0x43 0x42 0x0d 0x40 0x47 0x06 0x02 0x07 0x03 0x0b 0x04 0x41 0x0f 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,$i,0; done` to disable all standard NMEA messages.
 
 Finally **save the configuration** (make sure to use the correct serial interface):
 
@@ -153,11 +148,9 @@ $ ubxtool -f /dev/ttyACM0 -p SAVE
 ````
 
 Other useful commands include:
-
-- `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x01,0x07,0` to disable `UBX-NAV-PVT`.
-- `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x13,0` to disable `UBX-RXM-SFRBX`.
-- `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x15,0` to disable `UBX-RXM-RAWX`.
-
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x01,0x07,0` to disable `UBX-NAV-PVT`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x13,0` to disable `UBX-RXM-SFRBX`.
+* `ubxtool -f /dev/ttyACM0 -p CFG-MSG,0x02,0x15,0` to disable `UBX-RXM-RAWX`.
 * `for i in 0x0a 0x45 0x44 0x09 0x00 0x01 0x43 0x42 0x0d 0x40 0x47 0x06 0x02 0x07 0x03 0x0b 0x04 0x41 0x0f 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf0,$i,1; done` to enable all standard NMEA messages.
 * `for i in 0x00 0x01 0x0d 0x02 0x04 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf7,$i,1; done` to enable all secondary NMEA messages.
 * `for i in 0x00 0x01 0x0d 0x02 0x04 0x05 0x08; do ubxtool -f /dev/ttyACM0 -p CFG-MSG,0xf7,$i,0; done` to disable all secondary NMEA messages.
@@ -364,4 +357,3 @@ Many of the ephemeris parsing functions in our package are adapted from [RTKLIB]
 
 ## 8. License
 The source code is released under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license.
-
