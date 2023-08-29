@@ -16,8 +16,17 @@ Clone [gnss_comm](https://github.com/HKUST-Aerial-Robotics/gnss_comm) for ROS me
 
 ```shell
 $ cd /path/to/your_catkin_ws/src
-$ git clone git@github.com:HKUST-Aerial-Robotics/gnss_comm.git
+$ git clone git@github.com:ori-drs/gnss_comm.git
+$ cd gnss_com
+$ git checkout separate-gnss-comm-msgs
+$ cd ..
+$ git clone git@github.com:ori-drs/gnss_comm_msgs.git
+$ cd gnss_comm_msgs
+$ git checkout separate-gnss-comm-msgs
+$ cd ..
 $ git clone git@github.com:ori-drs/ublox_driver.git
+$ cd ublox_driver
+$ git checkout separate-gnss-comm-msgs
 ```
 
 Depending on your desired configuration, you might need to adapt [the configuration file](./config/driver_config.yaml), but it should work out-of-the-box.
