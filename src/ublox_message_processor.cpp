@@ -38,13 +38,13 @@ UbloxMessageProcessor::UbloxMessageProcessor(ros::NodeHandle& nh) :
     nh_(nh),
     MSG_HEADER_LEN(ParameterManager::getInstance().MSG_HEADER_LEN)
 {
-    pub_pvt_ = nh_.advertise<GnssPVTSolnMsg>("receiver_pvt", 100);
+    pub_pvt_ = nh_.advertise<gnss_comm_msgs::GnssPVTSolnMsg>("receiver_pvt", 100);
     pub_lla_ = nh_.advertise<sensor_msgs::NavSatFix>("receiver_lla", 100);
-    pub_tp_info_ = nh_.advertise<GnssTimePulseInfoMsg>("time_pulse_info", 100);
-    pub_range_meas_ = nh_.advertise<GnssMeasMsg>("range_meas", 100);
-    pub_ephem_ = nh_.advertise<GnssEphemMsg>("ephem", 100);
-    pub_glo_ephem_ = nh_.advertise<GnssGloEphemMsg>("glo_ephem", 100);
-    pub_iono_ = nh_.advertise<StampedFloat64Array>("iono_params", 100);
+    pub_tp_info_ = nh_.advertise<gnss_comm_msgs::GnssTimePulseInfoMsg>("time_pulse_info", 100);
+    pub_range_meas_ = nh_.advertise<gnss_comm_msgs::GnssMeasMsg>("range_meas", 100);
+    pub_ephem_ = nh_.advertise<gnss_comm_msgs::GnssEphemMsg>("ephem", 100);
+    pub_glo_ephem_ = nh_.advertise<gnss_comm_msgs::GnssGloEphemMsg>("glo_ephem", 100);
+    pub_iono_ = nh_.advertise<gnss_comm_msgs::StampedFloat64Array>("iono_params", 100);
 }
 
 void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
@@ -58,7 +58,7 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
     {
         std::vector<ObsPtr> meas = parse_meas_msg(data, len);
         if (meas.empty())   return;
-        GnssMeasMsg meas_msg = meas2msg(meas);
+        gnss_comm_msgs::GnssMeasMsg meas_msg = meas2msg(meas);
         pub_range_meas_.publish(meas_msg);
         return;
     }
@@ -70,19 +70,19 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
         {
             if (satsys(ephem->sat, NULL) == SYS_GLO)
             {
-                GnssGloEphemMsg glo_ephem_msg = glo_ephem2msg(std::dynamic_pointer_cast<GloEphem>(ephem));
+                gnss_comm_msgs::GnssGloEphemMsg glo_ephem_msg = glo_ephem2msg(std::dynamic_pointer_cast<GloEphem>(ephem));
                 pub_glo_ephem_.publish(glo_ephem_msg);
             }
             else
             {
-                GnssEphemMsg ephem_msg = ephem2msg(std::dynamic_pointer_cast<Ephem>(ephem));
+                gnss_comm_msgs::GnssEphemMsg ephem_msg = ephem2msg(std::dynamic_pointer_cast<Ephem>(ephem));
                 pub_ephem_.publish(ephem_msg);
             }
         }
         if (iono_params.size() == 8)
         {
             // publish ionosphere parameters
-            StampedFloat64Array iono_msg;
+            gnss_comm_msgs::StampedFloat64Array iono_msg;
             if (ephem && ephem->ttr.time!=0)
                 iono_msg.header.stamp = ros::Time(time2sec(ephem->ttr));
             std::copy(iono_params.begin(), iono_params.end(), std::back_inserter(iono_msg.data));
@@ -95,7 +95,7 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
         TimePulseInfoPtr tp_info = parse_time_pulse(data, len);
         if (tp_info && tp_info->time.time != 0)
         {
-            GnssTimePulseInfoMsg tp_info_msg = tp_info2msg(tp_info);
+            gnss_comm_msgs::GnssTimePulseInfoMsg tp_info_msg = tp_info2msg(tp_info);
             pub_tp_info_.publish(tp_info_msg);
         }
         return;
@@ -117,7 +117,7 @@ void UbloxMessageProcessor::process_data(const uint8_t *data, size_t len)
             pvt_soln->hgt = pvt_lla.z();
         }
 
-        GnssPVTSolnMsg pvt_msg = pvt2msg(pvt_soln);
+        gnss_comm_msgs::GnssPVTSolnMsg pvt_msg = pvt2msg(pvt_soln);
         pub_pvt_.publish(pvt_msg);
 
         sensor_msgs::NavSatFix lla_msg;

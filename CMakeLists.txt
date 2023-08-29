@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   gnss_comm
+  gnss_comm_msgs
 )
 
 catkin_package(
