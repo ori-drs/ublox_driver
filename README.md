@@ -104,11 +104,13 @@ corresponding to a measurement corresponding to 51° 45.63813" N und 1° 15.6425
 The binary messages will be displayed as special character sequences.
 
 **This driver requires only the binary messages to be activated in order to work.** If the NMEA meesages are enabled the code will get stuck in an infinite loop inside the serial handler. You need to manually enable the binary messages and turn off NMEA messages in case the `screen` command outputs any human-readable messages.
-Specifically, you need to **enable the following messages** (depending on your use case):
+Specifically, you need to **enable at least one of the following messages** (depending on your use case):
 
 * **`UBX-RXM-RAWX`** for raw GNSS measurements from individual satellites.
 * **`UBX-RXM-SFRBX`** for satellite navigation data broadcasted by the satellites.
 * **`UBX-NAV-PVT`** for pre-computed GNSS fixes.
+
+Since some of these messages consume a considerable amount of bandwidth, I suggest that you enebale only those that you require for your use case.
 
 You can find a description of all messages in [the u-blox F9 interface description](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf).
 
