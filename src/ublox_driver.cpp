@@ -72,7 +72,7 @@ void config_ack_callback(const uint8_t *data, size_t len)
     ack_cv.notify_one();
 }
 
-bool config_receiver(std::shared_ptr<SerialHandler> serial, std::vector<RcvConfigRecord> &rcv_configs)
+bool config_receiver(SerialHandler* serial, std::vector<RcvConfigRecord> &rcv_configs)
 {
     const uint32_t rcv_config_buff_capacity = 8192;
     std::unique_ptr<uint8_t[]> rcv_config_buff(new uint8_t[rcv_config_buff_capacity]);
@@ -119,32 +119,32 @@ int main(int argc, char **argv)
     ParameterManager &pm(ParameterManager::getInstance());
     pm.read_parameter(config_filepath);
 
-    std::shared_ptr<SerialHandler> serial;
-    std::shared_ptr<SocketHandler> socket;
-    std::shared_ptr<FileLoader> file_loader;
-    std::shared_ptr<FileDumper> file_dumper;
-    std::shared_ptr<UbloxMessageProcessor> ublox_msg_processor;
-    std::shared_ptr<SerialHandler> output_serial;
+    std::unique_ptr<SerialHandler> serial;
+    std::unique_ptr<SocketHandler> socket;
+    std::unique_ptr<FileLoader> file_loader;
+    std::unique_ptr<FileDumper> file_dumper;
+    std::unique_ptr<UbloxMessageProcessor> ublox_msg_processor;
+    std::unique_ptr<SerialHandler> output_serial;
     if (pm.to_ros)
-        ublox_msg_processor.reset(new UbloxMessageProcessor(nh));
+        ublox_msg_processor = std::make_unique<UbloxMessageProcessor>(nh);
     if (pm.to_file)
     {
         const std::string t_str = time_str();
         const std::string dump_filepath = pm.dump_dir + "/" + t_str + ".ubx";
-        file_dumper.reset(new FileDumper(dump_filepath));
+        file_dumper = std::make_unique<FileDumper>(dump_filepath);
     }
     if (pm.to_serial)
     {
-        output_serial.reset(new SerialHandler(pm.output_serial_port, pm.serial_baud_rate));
+        output_serial = std::make_unique<SerialHandler>(pm.output_serial_port, pm.serial_baud_rate);
     }
     
     if (pm.online)
     {
-        serial.reset(new SerialHandler(pm.input_serial_port, pm.serial_baud_rate));
+        serial = std::make_unique<SerialHandler>(pm.input_serial_port, pm.serial_baud_rate);
 
         if (pm.config_receiver_at_start)
         {
-            if (config_receiver(serial, pm.receiver_configs))
+            if (config_receiver(serial.get(), pm.receiver_configs))
                 LOG(ERROR) << "Successfully configured the receiver.";
             else
                 LOG(FATAL) << "Error occurs when configuring the receiver.";
@@ -152,8 +152,8 @@ int main(int argc, char **argv)
         
         if (pm.input_rtcm)
         {
-            socket.reset(new SocketHandler("localhost", pm.rtcm_tcp_port));
-            socket->addCallback(std::bind(&SerialHandler::writeRaw, serial.get(), 
+            socket = std::make_unique<SocketHandler>("localhost", pm.rtcm_tcp_port);
+            socket->addCallback(std::bind(&SerialHandler::writeRaw, serial.get(),
                 std::placeholders::_1, std::placeholders::_2, pm.IO_TIMEOUT_MS));
             socket->startRead();
         }
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        file_loader.reset(new FileLoader(pm.ubx_filepath, pm.serial_baud_rate));
+        file_loader = std::make_unique<FileLoader>(pm.ubx_filepath, pm.serial_baud_rate);
 
         if (pm.to_ros)
             file_loader->addCallback(std::bind(&UbloxMessageProcessor::process_data, 
