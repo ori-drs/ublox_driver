@@ -56,7 +56,7 @@ std::string time_str()
     time_ptr = time(NULL);
     tm *tm_local = localtime(&time_ptr);
     ss << tm_local->tm_year + 1900 << '_' << tm_local->tm_mon + 1 << '_'
-       << tm_local->tm_mday << '_' << tm_local->tm_hour << '_' 
+       << tm_local->tm_mday << '_' << tm_local->tm_hour << '_'
        << tm_local->tm_min << '_' << tm_local->tm_sec;
     return ss.str();
 }
@@ -81,7 +81,7 @@ bool config_receiver(SerialHandler* serial, std::vector<RcvConfigRecord> &rcv_co
     UbloxMessageProcessor::build_config_msg(rcv_configs, rcv_config_buff.get(), msg_len);
     std::unique_lock<std::mutex> ack_lk(ack_m);
     ack_flag = 0;
-    serial->addCallback(std::bind(&config_ack_callback, 
+    serial->addCallback(std::bind(&config_ack_callback,
         std::placeholders::_1, std::placeholders::_2));
     serial->writeRaw(rcv_config_buff.get(), msg_len);
     serial->startRead();
@@ -92,7 +92,7 @@ bool config_receiver(SerialHandler* serial, std::vector<RcvConfigRecord> &rcv_co
     // resume
     if (ack_flag == 1)
         return true;
-    
+
     return false;
 }
 
@@ -137,7 +137,7 @@ int main(int argc, char **argv)
     {
         output_serial = std::make_unique<SerialHandler>(pm.output_serial_port, pm.serial_baud_rate);
     }
-    
+
     if (pm.online)
     {
         serial = std::make_unique<SerialHandler>(pm.input_serial_port, pm.serial_baud_rate);
@@ -149,7 +149,7 @@ int main(int argc, char **argv)
             else
                 LOG(FATAL) << "Error occurs when configuring the receiver.";
         }
-        
+
         if (pm.input_rtcm)
         {
             socket = std::make_unique<SocketHandler>("localhost", pm.rtcm_tcp_port);
@@ -157,17 +157,17 @@ int main(int argc, char **argv)
                 std::placeholders::_1, std::placeholders::_2, pm.IO_TIMEOUT_MS));
             socket->startRead();
         }
-        
+
         if (pm.to_ros)
-            serial->addCallback(std::bind(&UbloxMessageProcessor::process_data, 
+            serial->addCallback(std::bind(&UbloxMessageProcessor::process_data,
                 ublox_msg_processor.get(), std::placeholders::_1, std::placeholders::_2));
-            
+
         if (pm.to_file)
-            serial->addCallback(std::bind(&FileDumper::process_data, file_dumper.get(), 
+            serial->addCallback(std::bind(&FileDumper::process_data, file_dumper.get(),
                 std::placeholders::_1, std::placeholders::_2));
-        
+
         if (pm.to_serial)
-            serial->addCallback(std::bind(&SerialHandler::writeRaw, output_serial.get(), 
+            serial->addCallback(std::bind(&SerialHandler::writeRaw, output_serial.get(),
                 std::placeholders::_1, std::placeholders::_2, pm.IO_TIMEOUT_MS));
 
         serial->startRead();
@@ -177,15 +177,15 @@ int main(int argc, char **argv)
         file_loader = std::make_unique<FileLoader>(pm.ubx_filepath, pm.serial_baud_rate);
 
         if (pm.to_ros)
-            file_loader->addCallback(std::bind(&UbloxMessageProcessor::process_data, 
+            file_loader->addCallback(std::bind(&UbloxMessageProcessor::process_data,
                 ublox_msg_processor.get(), std::placeholders::_1, std::placeholders::_2));
-            
+
         if (pm.to_file)
-            file_loader->addCallback(std::bind(&FileDumper::process_data, file_dumper.get(), 
+            file_loader->addCallback(std::bind(&FileDumper::process_data, file_dumper.get(),
                 std::placeholders::_1, std::placeholders::_2));
-            
+
         if (pm.to_serial)
-            file_loader->addCallback(std::bind(&SerialHandler::writeRaw, output_serial.get(), 
+            file_loader->addCallback(std::bind(&SerialHandler::writeRaw, output_serial.get(),
                 std::placeholders::_1, std::placeholders::_2, pm.IO_TIMEOUT_MS));
 
         file_loader->startRead();
@@ -202,6 +202,6 @@ int main(int argc, char **argv)
         serial->close();
     if (file_loader)
         file_loader->close();
-    
+
     return 0;
 }

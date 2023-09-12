@@ -29,7 +29,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/third_party/
 )
 
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/ublox_driver.cpp 
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/src/ublox_driver.cpp
                                ${PROJECT_SOURCE_DIR}/src/ublox_message_processor.cpp
                                ${PROJECT_SOURCE_DIR}/src/file_loader.cpp
                                ${PROJECT_SOURCE_DIR}/src/file_dumper.cpp
