@@ -81,7 +81,7 @@ $ export PYTHONPATH=${PYTHONPATH}:/usr/local/lib/python3/dist-packages
 ```
 * Of course, you can also just figure out the binary representation of your configuration commands in [the u-blox F9 interface description](https://content.u-blox.com/sites/default/files/documents/u-blox-F9-HPG-1.32_InterfaceDescription_UBX-22008968.pdf) and just write them straight to your serial port `/dev/ttyACM0`.
 
-## Enabeling and disabling messages
+## Enabling and disabling messages
 
 The receiver can broadcast two different types of messages: **human-readable NMEA messages** and **binary UBX messages**.
 
